@@ -311,10 +311,10 @@ function cleanup() {
 
 async function ensureThreeLoaded() {
   if (!THREE) {
-    THREE = await import('https://unpkg.com/three@0.170.0/build/three.module.js');
+    THREE = await import('three');
   }
   if (!GLTFLoader) {
-    const module = await import('https://unpkg.com/three@0.170.0/examples/jsm/loaders/GLTFLoader.js');
+    const module = await import('three/addons/loaders/GLTFLoader.js');
     GLTFLoader = module.GLTFLoader;
   }
 }
