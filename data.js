@@ -43,5 +43,22 @@ export const artworks = [
     poster: null,
     description: "A playful rocket ship model demonstrating the potential of web-based spatial art galleries. Place it on your desk with AR.",
     color: "#D9A84A"
+  },
+  {
+    id: "piece-04",
+    title: "Gaussian Splat",
+    artist: "Spatial Capture",
+    medium: "Gaussian Splatting",
+    dimensions: "Interactive \u00b7 Splat",
+    year: "2025",
+    usdz: null,
+    glb: null,
+    poster: null,
+    description: "A photorealistic 3D capture using Gaussian splatting. This format renders millions of tiny splats instead of traditional polygons, producing incredibly lifelike results.",
+    color: "#7B4AD9",
+    splat: {
+      embedUrl: "https://superspl.at/s?id=e2975629",
+      splatUrl: "https://superspl.at/s?id=e2975629"
+    }
   }
 ];

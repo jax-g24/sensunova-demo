@@ -1,6 +1,7 @@
 import { createModelElement, supportsModelElement } from '../components/model-loader.js';
 import { createQuickLookLink } from '../components/ar-quicklook.js';
 import { createWebXRButton } from '../components/webxr-viewer.js';
+import { isSplatArtwork, createSplatEmbed, createSplatThreeJS } from '../components/splat-viewer.js';
 
 function createDetailPlaceholder(artwork) {
   const div = document.createElement('div');
@@ -62,72 +63,121 @@ export function renderDetailView(container, state, navigate) {
     const modelContainer = document.createElement('div');
     modelContainer.className = 'detail-model';
 
-    // Build the model/poster content
-    const modelEl = createModelElement(artwork, state);
+    if (isSplatArtwork(artwork)) {
+      // --- Gaussian Splat artwork ---
+      // Viewer toggle: iframe embed vs Three.js renderer
+      const viewerToggle = document.createElement('div');
+      viewerToggle.className = 'splat-viewer-toggle';
 
-    if (modelEl) {
-      // On visionOS: native <model> renders inline
-      modelContainer.appendChild(modelEl);
+      const embedBtn = document.createElement('button');
+      embedBtn.className = 'splat-toggle-btn active';
+      embedBtn.textContent = 'Embedded Viewer';
+
+      const threeBtn = document.createElement('button');
+      threeBtn.className = 'splat-toggle-btn';
+      threeBtn.textContent = '3D Renderer';
+
+      viewerToggle.appendChild(embedBtn);
+      viewerToggle.appendChild(threeBtn);
+
+      // Start with iframe embed (Option 1)
+      const embed = createSplatEmbed(artwork);
+      if (embed) modelContainer.appendChild(embed);
+
+      let currentMode = 'embed';
+
+      embedBtn.addEventListener('click', () => {
+        if (currentMode === 'embed') return;
+        currentMode = 'embed';
+        embedBtn.classList.add('active');
+        threeBtn.classList.remove('active');
+        modelContainer.textContent = '';
+        const newEmbed = createSplatEmbed(artwork);
+        if (newEmbed) modelContainer.appendChild(newEmbed);
+      });
+
+      threeBtn.addEventListener('click', async () => {
+        if (currentMode === 'three') return;
+        currentMode = 'three';
+        threeBtn.classList.add('active');
+        embedBtn.classList.remove('active');
+        modelContainer.textContent = '';
+        const splatView = await createSplatThreeJS(artwork, modelContainer);
+        if (splatView) modelContainer.appendChild(splatView);
+      });
+
+      detail.appendChild(back);
+      detail.appendChild(viewerToggle);
+      detail.appendChild(modelContainer);
+
+      // Hint for splat
+      const hint = document.createElement('p');
+      hint.className = 'detail-hint';
+      hint.textContent = 'Orbit and zoom the Gaussian splat capture. Switch between embedded viewer and 3D renderer above.';
+      detail.appendChild(hint);
+
     } else {
-      // No inline 3D — show placeholder
-      let placeholder;
-      if (artwork.poster) {
-        placeholder = document.createElement('img');
-        placeholder.src = artwork.poster;
-        placeholder.alt = artwork.title;
+      // --- Standard USDZ/GLB artwork ---
+      const modelEl = createModelElement(artwork, state);
+
+      if (modelEl) {
+        modelContainer.appendChild(modelEl);
       } else {
-        placeholder = createDetailPlaceholder(artwork);
+        let placeholder;
+        if (artwork.poster) {
+          placeholder = document.createElement('img');
+          placeholder.src = artwork.poster;
+          placeholder.alt = artwork.title;
+        } else {
+          placeholder = createDetailPlaceholder(artwork);
+        }
+
+        if (artwork.usdz) {
+          const arContent = document.createElement('div');
+          arContent.className = 'detail-model-ar-wrap';
+          arContent.appendChild(placeholder);
+
+          const prompt = document.createElement('div');
+          prompt.className = 'ar-tap-prompt';
+          prompt.textContent = 'Tap to view in AR';
+          arContent.appendChild(prompt);
+
+          const arLink = createQuickLookLink(artwork, arContent);
+          modelContainer.appendChild(arLink);
+        } else {
+          modelContainer.appendChild(placeholder);
+        }
       }
 
-      // Wrap in AR Quick Look link — tapping the poster opens AR
+      // Action buttons overlay
+      const buttonRow = document.createElement('div');
+      buttonRow.className = 'detail-model-actions';
+
       if (artwork.usdz) {
-        const arContent = document.createElement('div');
-        arContent.className = 'detail-model-ar-wrap';
-        arContent.appendChild(placeholder);
-
-        const prompt = document.createElement('div');
-        prompt.className = 'ar-tap-prompt';
-        prompt.textContent = 'Tap to view in AR';
-        arContent.appendChild(prompt);
-
-        const arLink = createQuickLookLink(artwork, arContent);
-        modelContainer.appendChild(arLink);
-      } else {
-        modelContainer.appendChild(placeholder);
+        buttonRow.appendChild(createAROverlayButton(artwork));
       }
+
+      const xrBtn = await createWebXRButton(artwork);
+      if (xrBtn) buttonRow.appendChild(xrBtn);
+
+      if (buttonRow.children.length > 0) {
+        modelContainer.appendChild(buttonRow);
+      }
+
+      detail.appendChild(back);
+      detail.appendChild(modelContainer);
+
+      // Hint text
+      const hint = document.createElement('p');
+      hint.className = 'detail-hint';
+      if (state.isVisionOS) {
+        hint.textContent = 'Interact with the model, or use the buttons to place it in your space';
+      } else if (artwork.usdz) {
+        hint.textContent = 'Tap "View in AR" to see this artwork in your room';
+      }
+      if (hint.textContent) detail.appendChild(hint);
     }
 
-    // Action buttons overlay on the model area
-    const buttonRow = document.createElement('div');
-    buttonRow.className = 'detail-model-actions';
-
-    // AR Quick Look button (USDZ)
-    if (artwork.usdz) {
-      buttonRow.appendChild(createAROverlayButton(artwork));
-    }
-
-    // WebXR button — only appears if device supports it
-    const xrBtn = await createWebXRButton(artwork);
-    if (xrBtn) {
-      buttonRow.appendChild(xrBtn);
-    }
-
-    if (buttonRow.children.length > 0) {
-      modelContainer.appendChild(buttonRow);
-    }
-
-    // Hint text
-    const hint = document.createElement('p');
-    hint.className = 'detail-hint';
-    if (state.isVisionOS) {
-      hint.textContent = 'Interact with the model, or use the buttons to place it in your space';
-    } else if (artwork.usdz) {
-      hint.textContent = 'Tap "View in AR" to see this artwork in your room';
-    }
-
-    detail.appendChild(back);
-    detail.appendChild(modelContainer);
-    if (hint.textContent) detail.appendChild(hint);
     detail.appendChild(createMetadataPanel(artwork, state));
     container.appendChild(detail);
 
@@ -141,7 +191,6 @@ function createAROverlayButton(artwork) {
   link.rel = 'ar';
   link.className = 'ar-overlay-button';
 
-  // Hidden img required by Safari for AR link detection
   const triggerImg = document.createElement('img');
   triggerImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   triggerImg.alt = '';
