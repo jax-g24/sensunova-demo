@@ -1,6 +1,7 @@
-// WebXR immersive viewer
-// Supports both immersive-ar and immersive-vr modes
-// hit-test is optional — works without it by placing in front of camera
+// WebXR immersive gallery viewer
+// Loads the gallery environment as a 3D scene and lets users bring artwork into it
+
+import { gallery } from '../data.js';
 
 let xrSession = null;
 let xrMode = null;
@@ -14,12 +15,13 @@ let hitTestAvailable = false;
 let placedModels = [];
 let overlay = null;
 let THREE = null;
+let GLTFLoader = null;
+let galleryModel = null;
 
 // Check which WebXR modes are available
 async function detectWebXRSupport() {
   if (!navigator.xr) return { supported: false, mode: null };
 
-  // Try immersive-ar first (passthrough AR), then immersive-vr (full immersive)
   try {
     const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
     if (arSupported) return { supported: true, mode: 'immersive-ar' };
@@ -42,19 +44,23 @@ function createReticle() {
   return mesh;
 }
 
-function createOverlay(onExit, mode) {
+function createOverlay(onExit, artworkTitle, mode) {
   const div = document.createElement('div');
   div.className = 'webxr-overlay';
 
   const hint = document.createElement('p');
   hint.className = 'webxr-hint';
-  hint.textContent = mode === 'immersive-ar'
-    ? 'Look at a surface, then tap to place'
-    : 'Tap to place the object in your space';
+  if (artworkTitle) {
+    hint.textContent = mode === 'immersive-ar'
+      ? `Look at a surface, then tap to place "${artworkTitle}"`
+      : `Tap to place "${artworkTitle}" in the gallery`;
+  } else {
+    hint.textContent = 'Entering gallery environment';
+  }
 
   const exitBtn = document.createElement('button');
   exitBtn.className = 'webxr-exit-button';
-  exitBtn.textContent = 'Exit';
+  exitBtn.textContent = 'Exit Gallery';
   exitBtn.addEventListener('click', onExit);
 
   div.appendChild(hint);
@@ -62,23 +68,64 @@ function createOverlay(onExit, mode) {
   return div;
 }
 
-async function loadGLBModel(url) {
-  const { GLTFLoader } = await import('https://unpkg.com/three@0.170.0/examples/jsm/loaders/GLTFLoader.js');
+async function loadGLBModel(url, targetScale) {
   const loader = new GLTFLoader();
   return new Promise((resolve, reject) => {
     loader.load(url, (gltf) => {
       const model = gltf.scene;
-      const box = new THREE.Box3().setFromObject(model);
-      const size = new THREE.Vector3();
-      box.getSize(size);
-      const maxDim = Math.max(size.x, size.y, size.z);
-      if (maxDim > 0) {
-        const scale = 0.3 / maxDim;
-        model.scale.setScalar(scale);
+      if (targetScale) {
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        if (maxDim > 0) {
+          const scale = targetScale / maxDim;
+          model.scale.setScalar(scale);
+        }
       }
       resolve(model);
     }, undefined, reject);
   });
+}
+
+async function loadGalleryEnvironment() {
+  const envUrl = gallery.environmentGlb;
+  if (!envUrl) return null;
+
+  try {
+    const loader = new GLTFLoader();
+    return new Promise((resolve, reject) => {
+      loader.load(envUrl, (gltf) => {
+        const model = gltf.scene;
+
+        // The gallery model is in centimeter-scale (bounds ~1200 units wide)
+        // Scale down to meters: divide by 100
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        const center = new THREE.Vector3();
+        box.getSize(size);
+        box.getCenter(center);
+
+        const maxDim = Math.max(size.x, size.y, size.z);
+        // Target: gallery should be ~12m wide (room-scale)
+        const targetSize = 12;
+        const scale = targetSize / maxDim;
+        model.scale.setScalar(scale);
+
+        // Center the gallery around the user (origin)
+        model.position.set(
+          -center.x * scale,
+          -center.y * scale + 0.5, // lift slightly so floor is near user feet
+          -center.z * scale
+        );
+
+        resolve(model);
+      }, undefined, reject);
+    });
+  } catch (err) {
+    console.error('Failed to load gallery environment:', err);
+    return null;
+  }
 }
 
 function createPlaceholderModel() {
@@ -104,7 +151,7 @@ function placeModel(glbUrl, position, quaternion) {
   };
 
   if (glbUrl) {
-    loadGLBModel(glbUrl).then(place).catch(err => {
+    loadGLBModel(glbUrl, 0.3).then(place).catch(err => {
       console.error('Failed to load model:', err);
       place(createPlaceholderModel());
     });
@@ -115,16 +162,14 @@ function placeModel(glbUrl, position, quaternion) {
 
 function onSelect(glbUrl) {
   if (hitTestAvailable && reticle && reticle.visible) {
-    // Place at hit-test reticle position
     const position = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
     const quaternion = new THREE.Quaternion().setFromRotationMatrix(reticle.matrix);
     placeModel(glbUrl, position, quaternion);
   } else {
-    // No hit-test — place 1.5m in front of the camera
+    // Place 1.5m in front of the camera
     const direction = new THREE.Vector3(0, 0, -1.5);
     direction.applyQuaternion(camera.quaternion);
     const position = camera.position.clone().add(direction);
-    // Drop it down a bit to appear on a surface
     position.y -= 0.3;
     placeModel(glbUrl, position, null);
   }
@@ -134,7 +179,7 @@ function onXRFrame(t, frame) {
   const session = renderer.xr.getSession();
   if (!session) return;
 
-  // Try to set up hit-testing if available (only for immersive-ar)
+  // Try to set up hit-testing if available
   if (xrMode === 'immersive-ar' && !hitTestSourceRequested) {
     hitTestSourceRequested = true;
     session.requestReferenceSpace('viewer').then(viewerSpace => {
@@ -173,31 +218,46 @@ function onXRFrame(t, frame) {
   renderer.render(scene, camera);
 }
 
-async function startSession(mode, glbUrl) {
+async function startSession(mode, glbUrl, artworkTitle) {
   cleanup();
 
   xrMode = mode;
-  overlay = createOverlay(endSession, mode);
+  overlay = createOverlay(endSession, artworkTitle, mode);
   document.body.appendChild(overlay);
 
   renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.xr.enabled = true;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
 
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 200);
 
-  // Lighting
-  scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-  dirLight.position.set(0.5, 1, 0.5);
+  // Lighting for the gallery
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  dirLight.position.set(2, 4, 2);
   scene.add(dirLight);
+
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+  fillLight.position.set(-2, 3, -1);
+  scene.add(fillLight);
+
+  // Load gallery environment
+  const galleryScene = await loadGalleryEnvironment();
+  if (galleryScene) {
+    galleryModel = galleryScene;
+    scene.add(galleryScene);
+  }
 
   reticle = createReticle();
   scene.add(reticle);
 
-  // Build session options — only require what's available
+  // Session options
   const sessionOptions = {
     optionalFeatures: ['dom-overlay', 'hit-test', 'local-floor'],
     domOverlay: { root: overlay }
@@ -234,6 +294,7 @@ function cleanup() {
   hitTestAvailable = false;
   placedModels = [];
   reticle = null;
+  galleryModel = null;
   scene = null;
   camera = null;
   xrMode = null;
@@ -245,18 +306,27 @@ function cleanup() {
   xrSession = null;
 }
 
+async function ensureThreeLoaded() {
+  if (!THREE) {
+    THREE = await import('https://unpkg.com/three@0.170.0/build/three.module.js');
+  }
+  if (!GLTFLoader) {
+    const module = await import('https://unpkg.com/three@0.170.0/examples/jsm/loaders/GLTFLoader.js');
+    GLTFLoader = module.GLTFLoader;
+  }
+}
+
 export async function createWebXRButton(artwork) {
   const { supported, mode } = await detectWebXRSupport();
 
-  if (!supported) return null; // Don't show button at all if no WebXR
+  if (!supported) return null;
 
   const button = document.createElement('a');
   button.href = '#';
   button.className = 'ar-overlay-button ar-overlay-button-xr';
 
-  // Hidden img for visual consistency (not needed for WebXR, just styling)
   const label = document.createElement('span');
-  label.textContent = 'Enter Immersive';
+  label.textContent = 'Enter Gallery';
   button.appendChild(label);
 
   button.addEventListener('click', async (e) => {
@@ -264,12 +334,12 @@ export async function createWebXRButton(artwork) {
     e.stopPropagation();
     label.textContent = 'Loading\u2026';
     try {
-      THREE = await import('https://unpkg.com/three@0.170.0/build/three.module.js');
-      await startSession(mode, artwork.glb);
-      label.textContent = 'Enter Immersive';
+      await ensureThreeLoaded();
+      await startSession(mode, artwork.glb, artwork.title);
+      label.textContent = 'Enter Gallery';
     } catch (err) {
       console.error('WebXR error:', err);
-      label.textContent = 'Enter Immersive';
+      label.textContent = 'Enter Gallery';
     }
   });
 

@@ -144,7 +144,9 @@ export function renderDetailView(container, state, navigate) {
       const hint = document.createElement('p');
       hint.className = 'detail-hint';
       if (state.isVisionOS) {
-        hint.textContent = 'Interact with the model, or use the buttons to place it in your space';
+        hint.textContent = 'Interact with the model, or tap "Enter Gallery" to place it in the gallery space';
+      } else if (artwork.glb) {
+        hint.textContent = 'Tap "Enter Gallery" to view this artwork in the immersive gallery';
       } else if (artwork.usdz) {
         hint.textContent = 'Tap "View in AR" to see this artwork in your room';
       }
