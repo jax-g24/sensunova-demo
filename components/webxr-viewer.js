@@ -247,17 +247,11 @@ async function startSession(mode, glbUrl, artworkTitle) {
   fillLight.position.set(-2, 3, -1);
   scene.add(fillLight);
 
-  // Load gallery environment
-  const galleryScene = await loadGalleryEnvironment();
-  if (galleryScene) {
-    galleryModel = galleryScene;
-    scene.add(galleryScene);
-  }
-
   reticle = createReticle();
   scene.add(reticle);
 
-  // Session options
+  // Request WebXR session FIRST — must happen synchronously from user gesture
+  // Loading the gallery GLB afterwards is fine since the session is already active
   const sessionOptions = {
     optionalFeatures: ['dom-overlay', 'hit-test', 'local-floor'],
     domOverlay: { root: overlay }
@@ -275,6 +269,15 @@ async function startSession(mode, glbUrl, artworkTitle) {
     scene.add(controller);
 
     renderer.setAnimationLoop(onXRFrame);
+
+    // Load gallery environment in the background after session starts
+    loadGalleryEnvironment().then(galleryScene => {
+      if (galleryScene && scene) {
+        galleryModel = galleryScene;
+        scene.add(galleryScene);
+      }
+    }).catch(err => console.error('Gallery env load failed:', err));
+
   } catch (err) {
     console.error('Failed to start WebXR session:', err);
     cleanup();
@@ -320,6 +323,9 @@ export async function createWebXRButton(artwork) {
   const { supported, mode } = await detectWebXRSupport();
 
   if (!supported) return null;
+
+  // Preload Three.js so it's cached before the user clicks
+  ensureThreeLoaded().catch(() => {});
 
   const button = document.createElement('a');
   button.href = '#';
