@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spatial Objects — Sensunova</title>
+
+  <link rel="spatial-backdrop" href="assets/backdrop.usdz" environmentmap="assets/lighting.hdr">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header id="gallery-header">
+    <div class="header-brand">
+      <img src="assets/logo.png" alt="Sensunova" class="header-logo">
+    </div>
+    <h1>Spatial Objects</h1>
+    <p>Sensunova Gallery &middot; Demo Collection &middot; 2026</p>
+  </header>
+
+  <!-- App container — views render here, no page loads ever -->
+  <main id="app"></main>
+
+  <!-- model-viewer fallback for non-visionOS -->
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,463 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  background: #fafafa;
+  color: #1a1a1a;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- View transitions --- */
+
+#app {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#app.view-exiting {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+#app.view-entering {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* --- Header --- */
+
+header {
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 3rem;
+}
+
+.header-brand {
+  margin-bottom: 1.5rem;
+}
+
+.header-logo {
+  height: 28px;
+  width: auto;
+  opacity: 0.85;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+header p {
+  margin-top: 0.5rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+/* --- Gallery grid view --- */
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+}
+
+@media (min-width: 768px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.artwork-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.artwork-card:hover {
+  transform: translateY(-3px);
+}
+
+.artwork-card:active {
+  transform: translateY(0);
+}
+
+.artwork-poster {
+  border-radius: 6px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  position: relative;
+}
+
+.artwork-poster img,
+.artwork-poster .poster-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.poster-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: -0.02em;
+}
+
+.artwork-poster .badge-3d {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.artwork-info {
+  padding: 1.25rem 0;
+}
+
+.artwork-info h2 {
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.artwork-info .artist {
+  color: #444;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.artwork-info .meta {
+  color: #888;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* --- Detail view --- */
+
+.artwork-detail {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin-bottom: 2rem;
+  transition: color 0.15s ease;
+  font-family: inherit;
+}
+
+.back-button:hover {
+  color: #1a1a1a;
+}
+
+.detail-model {
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.detail-model img,
+.detail-model model,
+.detail-model model-viewer {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.detail-model .poster-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.detail-model .loading-indicator {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+  font-size: 0.8rem;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+}
+
+.detail-info h1 {
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.detail-info .artist {
+  font-size: 1.1rem;
+  color: #444;
+  margin-top: 0.5rem;
+}
+
+.detail-info .meta {
+  color: #888;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.detail-info .description {
+  margin-top: 1.5rem;
+  line-height: 1.7;
+  color: #333;
+}
+
+.detail-info .ar-hint {
+  margin-top: 2rem;
+  padding: 1rem 1.25rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.detail-info .platform-note {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fef9e7;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #8a6d3b;
+  text-align: center;
+}
+
+/* --- AR Quick Look: hidden trigger img --- */
+
+.ar-trigger-img {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- AR badge on gallery cards (1-tap AR) --- */
+
+.ar-badge-link {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: background 0.15s ease;
+  z-index: 2;
+}
+
+.ar-badge-link:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.ar-badge-label {
+  letter-spacing: 0.02em;
+}
+
+/* --- Action buttons row on detail model --- */
+
+.detail-model-actions {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 3;
+}
+
+.ar-overlay-button,
+.ar-overlay-button-xr {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: white;
+  text-decoration: none;
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.15s ease;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+.ar-overlay-button:hover,
+.ar-overlay-button-xr:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* --- Hint below model --- */
+
+.detail-hint {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 1.5rem;
+  margin-top: -1rem;
+}
+
+/* --- WebXR overlay --- */
+
+.webxr-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 2rem;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+.webxr-hint {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  pointer-events: none;
+}
+
+.webxr-exit-button {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.15s ease;
+  font-family: inherit;
+}
+
+.webxr-exit-button:hover {
+  background: white;
+}
+
+/* --- Detail model as AR link (non-visionOS) --- */
+
+.ar-quicklook-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+.detail-model-ar-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-model-ar-wrap img,
+.detail-model-ar-wrap .poster-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ar-tap-prompt {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 1.25rem;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* --- Staggered card entrance --- */
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.artwork-card {
+  opacity: 0;
+  animation: cardFadeIn 0.4s ease forwards;
+}
+
+.artwork-card:nth-child(1) { animation-delay: 0.05s; }
+.artwork-card:nth-child(2) { animation-delay: 0.1s; }
+.artwork-card:nth-child(3) { animation-delay: 0.15s; }
+.artwork-card:nth-child(4) { animation-delay: 0.2s; }
+.artwork-card:nth-child(5) { animation-delay: 0.25s; }
+.artwork-card:nth-child(6) { animation-delay: 0.3s; }
