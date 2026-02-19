@@ -1,7 +1,7 @@
 import { createModelElement, supportsModelElement } from '../components/model-loader.js';
 import { createQuickLookLink } from '../components/ar-quicklook.js';
 import { createWebXRButton } from '../components/webxr-viewer.js';
-import { isSplatArtwork, createSplatEmbed, createSplatThreeJS } from '../components/splat-viewer.js';
+import { isSplatArtwork, createSplatEmbed } from '../components/splat-viewer.js';
 
 function createDetailPlaceholder(artwork) {
   const div = document.createElement('div');
@@ -64,56 +64,16 @@ export function renderDetailView(container, state, navigate) {
     modelContainer.className = 'detail-model';
 
     if (isSplatArtwork(artwork)) {
-      // --- Gaussian Splat artwork ---
-      // Viewer toggle: iframe embed vs Three.js renderer
-      const viewerToggle = document.createElement('div');
-      viewerToggle.className = 'splat-viewer-toggle';
-
-      const embedBtn = document.createElement('button');
-      embedBtn.className = 'splat-toggle-btn active';
-      embedBtn.textContent = 'Embedded Viewer';
-
-      const threeBtn = document.createElement('button');
-      threeBtn.className = 'splat-toggle-btn';
-      threeBtn.textContent = '3D Renderer';
-
-      viewerToggle.appendChild(embedBtn);
-      viewerToggle.appendChild(threeBtn);
-
-      // Start with iframe embed (Option 1)
+      // --- Gaussian Splat artwork: iframe embed ---
       const embed = createSplatEmbed(artwork);
       if (embed) modelContainer.appendChild(embed);
 
-      let currentMode = 'embed';
-
-      embedBtn.addEventListener('click', () => {
-        if (currentMode === 'embed') return;
-        currentMode = 'embed';
-        embedBtn.classList.add('active');
-        threeBtn.classList.remove('active');
-        modelContainer.textContent = '';
-        const newEmbed = createSplatEmbed(artwork);
-        if (newEmbed) modelContainer.appendChild(newEmbed);
-      });
-
-      threeBtn.addEventListener('click', async () => {
-        if (currentMode === 'three') return;
-        currentMode = 'three';
-        threeBtn.classList.add('active');
-        embedBtn.classList.remove('active');
-        modelContainer.textContent = '';
-        const splatView = await createSplatThreeJS(artwork, modelContainer);
-        if (splatView) modelContainer.appendChild(splatView);
-      });
-
       detail.appendChild(back);
-      detail.appendChild(viewerToggle);
       detail.appendChild(modelContainer);
 
-      // Hint for splat
       const hint = document.createElement('p');
       hint.className = 'detail-hint';
-      hint.textContent = 'Orbit and zoom the Gaussian splat capture. Switch between embedded viewer and 3D renderer above.';
+      hint.textContent = 'Orbit and zoom the Gaussian splat capture';
       detail.appendChild(hint);
 
     } else {
@@ -167,7 +127,6 @@ export function renderDetailView(container, state, navigate) {
       detail.appendChild(back);
       detail.appendChild(modelContainer);
 
-      // Hint text
       const hint = document.createElement('p');
       hint.className = 'detail-hint';
       if (state.isVisionOS) {

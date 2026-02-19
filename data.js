@@ -57,8 +57,7 @@ export const artworks = [
     description: "A photorealistic 3D capture using Gaussian splatting. This format renders millions of tiny splats instead of traditional polygons, producing incredibly lifelike results.",
     color: "#7B4AD9",
     splat: {
-      embedUrl: "https://superspl.at/s?id=e2975629",
-      splatUrl: "https://superspl.at/s?id=e2975629"
+      embedUrl: "https://superspl.at/s?id=e2975629"
     }
   }
 ];

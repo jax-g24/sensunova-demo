@@ -439,40 +439,9 @@ header p {
 
 /* --- Gaussian Splat viewer --- */
 
-.splat-viewer-toggle {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.splat-toggle-btn {
-  padding: 0.5rem 1rem;
-  border: 1.5px solid #ddd;
-  border-radius: 6px;
-  background: white;
-  color: #666;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
-}
-
-.splat-toggle-btn:hover {
-  border-color: #999;
-}
-
-.splat-toggle-btn.active {
-  background: #1a1a1a;
-  color: white;
-  border-color: #1a1a1a;
-}
-
-.splat-embed-container,
-.splat-threejs-container {
+.splat-embed-container {
   width: 100%;
   height: 100%;
-  position: relative;
 }
 
 .splat-iframe {
@@ -480,27 +449,6 @@ header p {
   height: 100%;
   border: none;
   border-radius: 8px;
-}
-
-.splat-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-  border-radius: 8px;
-}
-
-.splat-loading {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: white;
-  padding: 0.6rem 1.25rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
 }
 
 /* --- Staggered card entrance --- */
