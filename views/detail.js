@@ -64,16 +64,30 @@ export function renderDetailView(container, state, navigate) {
     modelContainer.className = 'detail-model';
 
     if (isSplatArtwork(artwork)) {
-      // --- Gaussian Splat artwork: iframe embed ---
+      // --- Gaussian Splat artwork: iframe embed + AR Quick Look ---
       const embed = createSplatEmbed(artwork);
       if (embed) modelContainer.appendChild(embed);
+
+      // AR buttons if USDZ is available
+      if (artwork.usdz) {
+        const buttonRow = document.createElement('div');
+        buttonRow.className = 'detail-model-actions';
+        buttonRow.appendChild(createAROverlayButton(artwork));
+
+        const xrBtn = await createWebXRButton(artwork);
+        if (xrBtn) buttonRow.appendChild(xrBtn);
+
+        modelContainer.appendChild(buttonRow);
+      }
 
       detail.appendChild(back);
       detail.appendChild(modelContainer);
 
       const hint = document.createElement('p');
       hint.className = 'detail-hint';
-      hint.textContent = 'Orbit and zoom the Gaussian splat capture';
+      hint.textContent = artwork.usdz
+        ? 'Orbit the splat capture, or tap "View in AR" to place it in your room'
+        : 'Orbit and zoom the Gaussian splat capture';
       detail.appendChild(hint);
 
     } else {

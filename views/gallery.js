@@ -58,17 +58,18 @@ export function renderGalleryView(container, state, navigate) {
         posterWrap.appendChild(createPosterPlaceholder(artwork));
       }
 
-      // Type badge + AR Quick Look
+      // Type badge
       if (artwork.splat) {
         const badge = document.createElement('span');
         badge.className = 'badge-3d';
         badge.textContent = 'SPLAT';
         posterWrap.appendChild(badge);
-      } else {
-        const arBadge = createQuickLookBadge(artwork);
-        if (arBadge) {
-          posterWrap.appendChild(arBadge);
-        }
+      }
+
+      // AR Quick Look badge (1-tap AR from grid)
+      const arBadge = createQuickLookBadge(artwork);
+      if (arBadge) {
+        posterWrap.appendChild(arBadge);
       }
 
       card.appendChild(posterWrap);

@@ -51,7 +51,7 @@ export const artworks = [
     medium: "Gaussian Splatting",
     dimensions: "Interactive \u00b7 Splat",
     year: "2025",
-    usdz: null,
+    usdz: "assets/artworks/piece-04.usdz",
     glb: null,
     poster: null,
     description: "A photorealistic 3D capture using Gaussian splatting. This format renders millions of tiny splats instead of traditional polygons, producing incredibly lifelike results.",
