@@ -92,7 +92,7 @@ export function renderDetailView(container, state, navigate) {
 
     } else {
       // --- Standard USDZ/GLB artwork ---
-      const modelEl = createModelElement(artwork, state);
+      const modelEl = await createModelElement(artwork, state);
 
       if (modelEl) {
         modelContainer.appendChild(modelEl);

@@ -16,6 +16,8 @@
   }
   </script>
 
+  <link rel="modulepreload" href="https://unpkg.com/three@0.170.0/build/three.module.js">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,8 +33,6 @@
   <!-- App container — views render here, no page loads ever -->
   <main id="app"></main>
 
-  <!-- model-viewer fallback for non-visionOS -->
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

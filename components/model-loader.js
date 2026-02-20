@@ -7,10 +7,18 @@ export function supportsModelElement() {
 
 const isVisionOS = supportsModelElement();
 
+// Lazy-load model-viewer only when needed (non-visionOS)
+let modelViewerLoaded = false;
+async function ensureModelViewerLoaded() {
+  if (modelViewerLoaded || isVisionOS) return;
+  await import('https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js');
+  modelViewerLoaded = true;
+}
+
 // Cache loaded model elements
 const modelCache = new Map();
 
-export function createModelElement(artwork, state) {
+export async function createModelElement(artwork, state) {
   // Return cached if available
   if (modelCache.has(artwork.id)) {
     return modelCache.get(artwork.id).cloneNode(true);
@@ -53,6 +61,7 @@ export function createModelElement(artwork, state) {
 
   } else if (artwork.glb) {
     // <model-viewer> fallback for desktop/mobile
+    await ensureModelViewerLoaded();
     element = document.createElement('model-viewer');
     element.setAttribute('src', artwork.glb);
     if (artwork.usdz) element.setAttribute('ios-src', artwork.usdz);

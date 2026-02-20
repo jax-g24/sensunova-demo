@@ -29,9 +29,10 @@ export function createQuickLookBadge(artwork) {
   if (!artwork.usdz) return null;
 
   const link = document.createElement('a');
-  link.href = artwork.usdz;
+  link.href = '#';
   link.rel = 'ar';
   link.className = 'ar-badge-link';
+  link.dataset.usdzSrc = artwork.usdz;
 
   // Hidden img required by Safari for AR link detection
   const triggerImg = document.createElement('img');
@@ -44,6 +45,13 @@ export function createQuickLookBadge(artwork) {
   label.className = 'ar-badge-label';
   label.textContent = 'View in AR';
   link.appendChild(label);
+
+  // Swap in real USDZ href on interaction (before Safari's click AR interception)
+  function swapHref() {
+    link.href = link.dataset.usdzSrc;
+  }
+  link.addEventListener('mousedown', swapHref);
+  link.addEventListener('touchstart', swapHref);
 
   // Prevent the card click from also firing
   link.addEventListener('click', (e) => e.stopPropagation());
